@@ -169,10 +169,10 @@ mod halo2_lib {
     };
     use halo2_base::{
         gates::{flex_gate::FlexGateConfig, GateInstructions, RangeInstructions},
-        utils::BigPrimeField as PrimeField,
+        utils::BigPrimeField as BigPrimeField,
         AssignedValue,
         QuantumCell::{Constant, Existing, Witness},
-        {self},
+        {self}, halo2_proofs::halo2curves::group::{prime::PrimeCurveAffine, ff::PrimeField},
     };
     use halo2_ecc::{
         bigint::CRTInteger,
@@ -184,7 +184,7 @@ mod halo2_lib {
     type AssignedInteger<C> = CRTInteger<<C as CurveAffine>::ScalarExt>;
     type AssignedEcPoint<C> = EcPoint<<C as CurveAffine>::ScalarExt, AssignedInteger<C>>;
 
-    impl<'a, F: PrimeField> Context for halo2_base::Context<'a, F> {
+    impl<'a, F: BigPrimeField> Context for halo2_base::Context<'a, F> {
         fn constrain_equal(&mut self, lhs: Cell, rhs: Cell) -> Result<(), Error> {
             #[cfg(feature = "halo2-axiom")]
             self.region.constrain_equal(&lhs, &rhs)?;
@@ -198,7 +198,7 @@ mod halo2_lib {
         }
     }
 
-    impl<'a, F: PrimeField> IntegerInstructions<'a, F> for FlexGateConfig<F> {
+    impl<'a, F: BigPrimeField> IntegerInstructions<'a, F> for FlexGateConfig<F> {
         type Context = halo2_base::Context<'a, F>;
         type AssignedCell = AssignedValue<F>;
         type AssignedInteger = AssignedValue<F>;
@@ -298,8 +298,8 @@ mod halo2_lib {
 
     impl<'a, C: CurveAffineExt> EccInstructions<'a, C> for BaseFieldEccChip<C>
     where
-        C::ScalarExt: PrimeField,
-        C::Base: PrimeField,
+        C::ScalarExt: BigPrimeField,
+        C::Base: BigPrimeField,
     {
         type Context = halo2_base::Context<'a, C::Scalar>;
         type ScalarChip = FlexGateConfig<C::Scalar>;
@@ -375,7 +375,7 @@ mod halo2_lib {
                 ctx,
                 &points,
                 &scalars,
-                C::Scalar::NUM_BITS as usize,
+                <<C as PrimeCurveAffine>::Scalar as PrimeField>::NUM_BITS as usize,
                 4, // empirically clump factor of 4 seems to be best
             ))
         }
